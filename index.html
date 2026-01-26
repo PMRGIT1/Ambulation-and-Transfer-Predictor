@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ambulation and Transfer Predictor</title>
+  <style>
+    :root {
+      --bg: #FFF9FB;
+      --fg: #000009;
+      --primary: #1B5299;
+      --border: #1B5299;
+      --highlight: #90EE90;
+      --panelbg: #ffffff;
+      --muted: #444444;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .title {
+      margin: 0 0 16px 0;
+      font-size: 26px;
+      font-weight: bold;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--panelbg);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .field { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 6px; }
+    input[type="number"], select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      font-size: 16px;
+      font-weight: bold;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--fg);
+      outline: none;
+    }
+    button {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 18px;
+      font-weight: bold;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:active { transform: translateY(1px); }
+    h2, h4 { margin: 0 0 10px 0; font-weight: bold; }
+    .output-text {
+      margin: 10px 0 16px 0;
+      padding: 10px;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+      min-height: 44px;
+      box-sizing: border-box;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border: 1px solid #cccccc;
+      vertical-align: top;
+    }
+    th { background: #f3f3f3; }
+    .note {
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: normal;
+      color: var(--muted);
+    }
+    .small {
+      font-size: 14px;
+      font-weight: normal;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Ambulation and Transfer Predictor</div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="field">
+          <label for="AgeAtVisit">Current age</label>
+          <input id="AgeAtVisit" type="number" min="0" step="1" value="0">
+        </div>
+
+        <div class="field">
+          <label for="Ethnicity">Ethnicity</label>
+          <select id="Ethnicity">
+            <option value=""></option>
+            <option value="Hispanic or Latino/a">Hispanic or Latino/a</option>
+            <option value="Non-Hispanic or Latino/a">Non-Hispanic or Latino/a</option>
+            <option value="Not reported">Not reported</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="InsuranceID">Insurance type</label>
+          <select id="InsuranceID">
+            <option value=""></option>
+            <option value="Private">Private</option>
+            <option value="Public">Public</option>
+            <option value="Supplementary w/wo Public">Supplementary w/wo Public</option>
+            <option value="Uninsured">Uninsured</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="PrimaryDiagnosis">Sub-phenotype</label>
+          <select id="PrimaryDiagnosis">
+            <option value=""></option>
+            <option value="FATTY FILUM">FATTY FILUM</option>
+            <option value="LIPOMYELOMENINGOCELE">LIPOMYELOMENINGOCELE</option>
+            <option value="MENINGOCELE">MENINGOCELE</option>
+            <option value="MYELOMENINGOCELE">MYELOMENINGOCELE</option>
+            <option value="SPLIT CORD MALFORMATION">SPLIT CORD MALFORMATION</option>
+            <option value="TERMINAL MYELOCYSTOCELE">TERMINAL MYELOCYSTOCELE</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="amb_cur">Ambulation level</label>
+          <select id="amb_cur">
+            <option value=""></option>
+            <option value="Community">Community</option>
+            <option value="Household">Household</option>
+            <option value="Therapeutic">Therapeutic</option>
+            <option value="Non-ambulator">Non-ambulator</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="currentlesion_cur">Functional lesion level</label>
+          <select id="currentlesion_cur">
+            <option value=""></option>
+            <option value="Thoracic">Thoracic</option>
+            <option value="High-lumbar">High-lumbar</option>
+            <option value="Mid-lumbar">Mid-lumbar</option>
+            <option value="Low-lumbar">Low-lumbar</option>
+            <option value="Sacral">Sacral</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="currentsurgcount_cur">Orthopedic surgery and neurosurgery count</label>
+          <input id="currentsurgcount_cur" type="number" min="0" step="1" value="0">
+        </div>
+
+        <div class="field">
+          <label for="currentbraceused_cur">Does this patient use a brace?</label>
+          <select id="currentbraceused_cur">
+            <option value=""></option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="currentbracetype_cur">For patients who use a brace, what kind of brace do they use?</label>
+          <select id="currentbracetype_cur">
+            <option value=""></option>
+            <option value="AFO - Ankle Foot Orthosis">AFO - Ankle Foot Orthosis</option>
+            <option value="HKAFO - Hip Knee Ankle Foot Orthosis">HKAFO - Hip Knee Ankle Foot Orthosis</option>
+            <option value="KAFO - Knee Ankle Foot Orthosis">KAFO - Knee Ankle Foot Orthosis</option>
+            <option value="RGO - Reciprocating Gait Orthosis">RGO - Reciprocating Gait Orthosis</option>
+            <option value="SMO -Supra-Malleolar Orthosis">SMO -Supra-Malleolar Orthosis</option>
+            <option value="Unknown">Unknown</option>
+            <option value="Does not use a brace">Does not use a brace</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="mobilityWC_cur">Does this patient use a wheelchair?</label>
+          <select id="mobilityWC_cur">
+            <option value=""></option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="currentwheelchairtype_cur">For patients who use a wheelchair, what kind of chair do they use?</label>
+          <select id="currentwheelchairtype_cur">
+            <option value=""></option>
+            <option value="Attendant-only propelled wheelchair">Attendant-only propelled wheelchair</option>
+            <option value="Power wheelchair or scooter">Power wheelchair or scooter</option>
+            <option value="Self-propelled chair with power assist">Self-propelled chair with power assist</option>
+            <option value="Self-propelled manual wheelchair">Self-propelled manual wheelchair</option>
+            <option value="Unknown">Unknown</option>
+            <option value="Does not use a wheelchair">Does not use a wheelchair</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="currenttransfer_cur">For patients who use a wheelchair, are they able to transfer?</label>
+          <select id="currenttransfer_cur">
+            <option value=""></option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="Unknown">Unknown</option>
+            <option value="Does not use a wheelchair">Does not use a wheelchair</option>
+          </select>
+        </div>
+
+        <button id="predict_button" type="button">Predict</button>
+
+        <div class="note">
+          Chloe Shearer c***@pitt.edu
+          <div class="small">Dept. of PM&R, University of Pittsburgh.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Predicted Propensity of Future Ambulation Levels and Transfer Ability:</h2>
+        <h4>Predictions are for 3 to 5 years in the future</h4>
+
+        <div id="prediction" class="output-text">Click Predict to generate results.</div>
+
+        <div id="amb_table"></div>
+        <br>
+        <div id="transfer_table"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    function isNA(x) {
+      return x === null || x === undefined || x === "" || x === "NA";
+    }
+
+    function inSet(x, arr) {
+      return arr.indexOf(x) >= 0;
+    }
+
+    function safeNum(v) {
+      var x = parseFloat(v);
+      return isNaN(x) ? null : x;
+    }
+
+    function getValue(id) {
+      var el = document.getElementById(id);
+      return el ? el.value : "";
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function renderTable(containerId, headers, rows, highlightColIndex) {
+      var container = document.getElementById(containerId);
+      if (!container) return;
+
+      var maxVal = null;
+      if (highlightColIndex !== null && highlightColIndex !== undefined) {
+        for (var i = 0; i < rows.length; i++) {
+          var v = rows[i][highlightColIndex];
+          if (typeof v === "number" && !isNaN(v)) {
+            if (maxVal === null || v > maxVal) maxVal = v;
+          }
+        }
+      }
+
+      var html = "";
+      html += "<table>";
+      html += "<thead><tr>";
+      for (var h = 0; h < headers.length; h++) {
+        html += "<th>" + escapeHtml(headers[h]) + "</th>";
+      }
+      html += "</tr></thead>";
+      html += "<tbody>";
+
+      for (var r = 0; r < rows.length; r++) {
+        html += "<tr>";
+        for (var c = 0; c < headers.length; c++) {
+          var cell = rows[r][c];
+          var style = "";
+
+          if (c === highlightColIndex && maxVal !== null && typeof cell === "number") {
+            if (Math.abs(cell - maxVal) < 1e-12) {
+              style = ' style="background: var(--highlight);"';
+            }
+          }
+
+          if (typeof cell === "number") {
+            html += "<td" + style + ">" + cell.toFixed(4) + "</td>";
+          } else {
+            html += "<td" + style + ">" + escapeHtml(cell) + "</td>";
+          }
+        }
+        html += "</tr>";
+      }
+
+      html += "</tbody></table>";
+      container.innerHTML = html;
+    }
+
+    function mapInputs() {
+      var AgeAtVisit = safeNum(getValue("AgeAtVisit"));
+
+      var surgNum = safeNum(getValue("currentsurgcount_cur"));
+      var currentsurgcount_cur = (surgNum === null) ? "NA" : String(Math.floor(surgNum));
+
+      var EthnicityRaw = getValue("Ethnicity");
+      var Ethnicity = "NA";
+      if (EthnicityRaw === "Hispanic or Latino/a") Ethnicity = "Hispanic or Latino";
+      else if (EthnicityRaw === "Non-Hispanic or Latino/a") Ethnicity = "Not Hispanic or Latino";
+      else Ethnicity = "NA";
+
+      var InsuranceRaw = getValue("InsuranceID");
+      var InsuranceID = "NA";
+      if (InsuranceRaw === "Private") InsuranceID = "1";
+      else if (InsuranceRaw === "Public") InsuranceID = "2";
+      else if (InsuranceRaw === "Supplementary w/wo Public") InsuranceID = "3";
+      else if (InsuranceRaw === "Uninsured") InsuranceID = "4";
+      else InsuranceID = "NA";
+
+      var PrimaryDiagnosisRaw = getValue("PrimaryDiagnosis");
+      var PrimaryDiagnosis = PrimaryDiagnosisRaw;
+      if (PrimaryDiagnosisRaw === "" || PrimaryDiagnosisRaw === "Unknown") PrimaryDiagnosis = "NA";
+
+      var ambRaw = getValue("amb_cur");
+      var amb_cur = "NA";
+      if (ambRaw === "Community") amb_cur = "1";
+      else if (ambRaw === "Household") amb_cur = "2";
+      else if (ambRaw === "Therapeutic") amb_cur = "3";
+      else if (ambRaw === "Non-ambulator") amb_cur = "4";
+      else amb_cur = "NA";
+
+      var lesionRaw = getValue("currentlesion_cur");
+      var currentlesion_cur = "NA";
+      if (lesionRaw === "Thoracic") currentlesion_cur = "1";
+      else if (lesionRaw === "High-lumbar") currentlesion_cur = "2";
+      else if (lesionRaw === "Mid-lumbar") currentlesion_cur = "3";
+      else if (lesionRaw === "Low-lumbar") currentlesion_cur = "4";
+      else if (lesionRaw === "Sacral") currentlesion_cur = "5";
+      else currentlesion_cur = "NA";
+
+      var braceUsedRaw = getValue("currentbraceused_cur");
+      var currentbraceused_cur = "NA";
+      if (braceUsedRaw === "Yes") currentbraceused_cur = "1";
+      else if (braceUsedRaw === "No") currentbraceused_cur = "2";
+      else currentbraceused_cur = "NA";
+
+      var mobilityRaw = getValue("mobilityWC_cur");
+      var mobilityWC_cur = "NA";
+      if (mobilityRaw === "Yes") mobilityWC_cur = "1";
+      else if (mobilityRaw === "No") mobilityWC_cur = "2";
+      else mobilityWC_cur = "NA";
+
+      var transferRaw = getValue("currenttransfer_cur");
+      var currenttransfer_cur = "NA";
+      if (transferRaw === "Yes") currenttransfer_cur = "1";
+      else if (transferRaw === "No") currenttransfer_cur = "2";
+      else if (transferRaw === "Does not use a wheelchair") currenttransfer_cur = "9";
+      else currenttransfer_cur = "NA";
+
+      var currenttransfer_cur_for_amb = (currenttransfer_cur === "9") ? "NA" : currenttransfer_cur;
+
+      var currentbracetype_cur = getValue("currentbracetype_cur");
+      if (currentbracetype_cur === "" || currentbracetype_cur === "Unknown" || currentbracetype_cur === "Does not use a brace") {
+        currentbracetype_cur = "NA";
+      }
+
+      var currentwheelchairtype_cur = getValue("currentwheelchairtype_cur");
+      if (currentwheelchairtype_cur === "" || currentwheelchairtype_cur === "Unknown" || currentwheelchairtype_cur === "Does not use a wheelchair") {
+        currentwheelchairtype_cur = "NA";
+      }
+
+      return {
+        PrimaryDiagnosis: PrimaryDiagnosis,
+        InsuranceID: InsuranceID,
+        Ethnicity: Ethnicity,
+        AgeAtVisit: AgeAtVisit,
+        mobilityWC_cur: mobilityWC_cur,
+        currentwheelchairtype_cur: currentwheelchairtype_cur,
+        currentbraceused_cur: currentbraceused_cur,
+        currentbracetype_cur: currentbracetype_cur,
+        currentlesion_cur: currentlesion_cur,
+        currenttransfer_cur: currenttransfer_cur_for_amb,
+        currentsurgcount_cur: currentsurgcount_cur,
+        amb_cur: amb_cur,
+        transfer_applicable: (currenttransfer_cur !== "9")
+      };
+    }
+
+    // GUIDE currenttransfer_fut logic (from your first snippet)
+    function predictedTransfer(currenttransfer_cur, amb_cur) {
+      var catvalues;
+      var nodeid, predclass, posterior;
+
+      catvalues = ["2"];
+      if (inSet(currenttransfer_cur, catvalues)) {
+        nodeid = 2;
+        predclass = "2";
+        posterior = [0.15442e+00, 0.84558e+00];
+      } else {
+        catvalues = ["NA"];
+        if (isNA(currenttransfer_cur) || inSet(currenttransfer_cur, catvalues)) {
+          catvalues = ["4"];
+          if (inSet(amb_cur, catvalues)) {
+            nodeid = 12;
+            predclass = "2";
+            posterior = [0.43537e+00, 0.56463e+00];
+          } else {
+            nodeid = 13;
+            predclass = "1";
+            posterior = [0.73711e+00, 0.26289e+00];
+          }
+        } else {
+          nodeid = 7;
+          predclass = "1";
+          posterior = [0.75684e+00, 0.24316e+00];
+        }
+      }
+
+      return { nodeid: nodeid, predclass: predclass, posterior: posterior };
+    }
+
+    // GUIDE amb_fut logic (from your second snippet)
+    function predictedAmb(p) {
+      var catvalues;
+      var nodeid, predclass, posterior;
+
+      catvalues = ["5"];
+      if (inSet(p.currentlesion_cur, catvalues)) {
+        catvalues = ["1"];
+        if (inSet(p.mobilityWC_cur, catvalues)) {
+          catvalues = ["1"];
+          if (inSet(p.currentbraceused_cur, catvalues)) {
+            catvalues = ["0","12","16","18","3","5","6","8"];
+            if (inSet(p.currentsurgcount_cur, catvalues)) {
+              nodeid = 16;
+              predclass = "2";
+              posterior = [0.33122e+00, 0.61370e+00, 0.22058e-04, 0.55059e-01];
+            } else {
+              if (p.AgeAtVisit !== null && p.AgeAtVisit <= 17.2501901600) {
+                nodeid = 34;
+                predclass = "2";
+                posterior = [0.32828e+00, 0.38211e+00, 0.28958e+00, 0.22058e-04];
+              } else {
+                nodeid = 35;
+                predclass = "1";
+                posterior = [0.72150e+00, 0.22058e-04, 0.27846e+00, 0.22058e-04];
+              }
+            }
+          } else {
+            nodeid = 9;
+            predclass = "2";
+            posterior = [0.25819e+00, 0.43276e+00, 0.19131e+00, 0.11773e+00];
+          }
+        } else {
+          catvalues = ["4","16"];
+          if (inSet(p.currentsurgcount_cur, catvalues)) {
+            nodeid = 10;
+            predclass = "1";
+            posterior = [0.73511e+00, 0.90599e-01, 0.16021e+00, 0.14084e-01];
+          } else {
+            catvalues = ["2"];
+            if (inSet(p.currentbraceused_cur, catvalues)) {
+              nodeid = 22;
+              predclass = "1";
+              posterior = [0.98117e+00, 0.11302e-01, 0.75016e-02, 0.22058e-04];
+            } else {
+              catvalues = ["0","2","3","5","8","9"];
+              if (inSet(p.currentsurgcount_cur, catvalues)) {
+                nodeid = 46;
+                predclass = "1";
+                posterior = [0.85924e+00, 0.83057e-01, 0.36717e-01, 0.20981e-01];
+              } else {
+                catvalues = ["Hispanic or Latino"];
+                if (inSet(p.Ethnicity, catvalues)) {
+                  catvalues = ["MYELOMENINGOCELE"];
+                  if (inSet(p.PrimaryDiagnosis, catvalues)) {
+                    if (p.AgeAtVisit !== null && p.AgeAtVisit <= 10.2064064600) {
+                      nodeid = 376;
+                      predclass = "1";
+                      posterior = [0.73587e+00, 0.21415e+00, 0.22058e-04, 0.49953e-01];
+                    } else {
+                      nodeid = 377;
+                      predclass = "2";
+                      posterior = [0.42912e+00, 0.57084e+00, 0.22058e-04, 0.22058e-04];
+                    }
+                  } else {
+                    nodeid = 189;
+                    predclass = "1";
+                    posterior = [0.93382e+00, 0.22058e-04, 0.22058e-04, 0.66139e-01];
+                  }
+                } else {
+                  nodeid = 95;
+                  predclass = "1";
+                  posterior = [0.92550e+00, 0.74457e-01, 0.22058e-04, 0.22058e-04];
+                }
+              }
+            }
+          }
+        }
+      } else {
+        catvalues = ["1","2"];
+        if (inSet(p.currentlesion_cur, catvalues)) {
+          catvalues = ["NA"];
+          if (isNA(p.currentbraceused_cur) || inSet(p.currentbraceused_cur, catvalues)) {
+            catvalues = ["NA"];
+            if (isNA(p.mobilityWC_cur) || inSet(p.mobilityWC_cur, catvalues)) {
+              catvalues = ["1"];
+              if (inSet(p.currentlesion_cur, catvalues)) {
+                if (p.AgeAtVisit !== null && p.AgeAtVisit <= 12.5395326850) {
+                  catvalues = ["2","10","11","16","18"];
+                  if (inSet(p.currentsurgcount_cur, catvalues)) {
+                    nodeid = 192;
+                    predclass = "4";
+                    posterior = [0.22058e-04, 0.99802e-01, 0.13235e+00, 0.76782e+00];
+                  } else {
+                    catvalues = ["3","7","8","12"];
+                    if (inSet(p.currentsurgcount_cur, catvalues)) {
+                      nodeid = 386;
+                      predclass = "3";
+                      posterior = [0.74091e-02, 0.10349e+00, 0.61762e+00, 0.27148e+00];
+                    } else {
+                      catvalues = ["2"];
+                      if (inSet(p.InsuranceID, catvalues)) {
+                        if (p.AgeAtVisit !== null && p.AgeAtVisit <= 9.62205900450) {
+                          nodeid = 1548;
+                          predclass = "3";
+                          posterior = [0.22058e-04, 0.59496e-01, 0.55215e+00, 0.38833e+00];
+                        } else {
+                          nodeid = 1549;
+                          predclass = "4";
+                          posterior = [0.22058e-04, 0.10218e+00, 0.13550e+00, 0.76230e+00];
+                        }
+                      } else {
+                        nodeid = 775;
+                        predclass = "4";
+                        posterior = [0.11901e-01, 0.16623e+00, 0.38580e+00, 0.43607e+00];
+                      }
+                    }
+                  }
+                } else {
+                  nodeid = 97;
+                  predclass = "4";
+                  posterior = [0.80529e-02, 0.28120e-01, 0.18025e+00, 0.78357e+00];
+                }
+              } else {
+                if (p.AgeAtVisit !== null && p.AgeAtVisit <= 15.5027451550) {
+                  nodeid = 98;
+                  predclass = "3";
+                  posterior = [0.25857e-01, 0.20142e+00, 0.49740e+00, 0.27532e+00];
+                } else {
+                  if (p.AgeAtVisit !== null && p.AgeAtVisit <= 17.1668543350) {
+                    nodeid = 198;
+                    predclass = "4";
+                    posterior = [0.34635e-01, 0.22058e-04, 0.21375e+00, 0.75159e+00];
+                  } else {
+                    catvalues = ["1","2","3","4","5","8","13","31"];
+                    if (inSet(p.currentsurgcount_cur, catvalues)) {
+                      if (p.AgeAtVisit !== null && p.AgeAtVisit <= 22.7503605800) {
+                        nodeid = 796;
+                        predclass = "3";
+                        posterior = [0.11229e-01, 0.78424e-01, 0.57204e+00, 0.33831e+00];
+                      } else {
+                        nodeid = 797;
+                        predclass = "2";
+                        posterior = [0.44194e-01, 0.41153e+00, 0.13644e+00, 0.40783e+00];
+                      }
+                    } else {
+                      nodeid = 399;
+                      predclass = "4";
+                      posterior = [0.23830e-01, 0.12482e+00, 0.22072e+00, 0.63063e+00];
+                    }
+                  }
+                }
+              }
+            } else {
+              if (p.AgeAtVisit !== null && p.AgeAtVisit <= 15.1605696300) {
+                catvalues = ["1"];
+                if (inSet(p.InsuranceID, catvalues)) {
+                  catvalues = ["1"];
+                  if (inSet(p.currentlesion_cur, catvalues)) {
+                    catvalues = ["2"];
+                    if (inSet(p.currenttransfer_cur, catvalues)) {
+                      nodeid = 400;
+                      predclass = "4";
+                      posterior = [0.22058e-04, 0.22058e-04, 0.22058e-04, 0.99993e+00];
+                    } else {
+                      catvalues = ["2","3","5","9","13","14","17"];
+                      if (inSet(p.currentsurgcount_cur, catvalues)) {
+                        nodeid = 802;
+                        predclass = "4";
+                        posterior = [0.22058e-04, 0.22058e-04, 0.22058e-04, 0.99993e+00];
+                      } else {
+                        nodeid = 803;
+                        predclass = "3";
+                        posterior = [0.22058e-04, 0.22058e-04, 0.57714e+00, 0.42282e+00];
+                      }
+                    }
+                  } else {
+                    catvalues = ["2"];
+                    if (inSet(p.currenttransfer_cur, catvalues)) {
+                      nodeid = 402;
+                      predclass = "3";
+                      posterior = [0.22058e-04, 0.82923e-01, 0.54975e+00, 0.36731e+00];
+                    } else {
+                      nodeid = 403;
+                      predclass = "4";
+                      posterior = [0.86150e-02, 0.60166e-01, 0.15959e+00, 0.77163e+00];
+                    }
+                  }
+                } else {
+                  nodeid = 101;
+                  predclass = "4";
+                  posterior = [0.34489e-02, 0.72261e-01, 0.95834e-01, 0.82846e+00];
+                }
+              } else {
+                nodeid = 51;
+                predclass = "4";
+                posterior = [0.22225e-02, 0.38805e-01, 0.36024e-01, 0.92295e+00];
+              }
+            }
+          } else {
+            catvalues = ["NA"];
+            if (isNA(p.currenttransfer_cur) || inSet(p.currenttransfer_cur, catvalues)) {
+              catvalues = ["Self-propelled manual wheelchair"];
+              if (inSet(p.currentwheelchairtype_cur, catvalues)) {
+                catvalues = ["3","6","8","9","10","12"];
+                if (inSet(p.currentsurgcount_cur, catvalues)) {
+                  nodeid = 104;
+                  predclass = "3";
+                  posterior = [0.61502e-01, 0.39048e+00, 0.46607e+00, 0.81947e-01];
+                } else {
+                  nodeid = 105;
+                  predclass = "2";
+                  posterior = [0.78296e-01, 0.74566e+00, 0.65927e-01, 0.11012e+00];
+                }
+              } else {
+                nodeid = 53;
+                predclass = "1";
+                posterior = [0.54114e+00, 0.16432e+00, 0.21792e+00, 0.76630e-01];
+              }
+            } else {
+              nodeid = 27;
+              predclass = "3";
+              posterior = [0.61661e-02, 0.94739e-01, 0.74245e+00, 0.15665e+00];
+            }
+          }
+        } else {
+          catvalues = ["NA"];
+          if (isNA(p.currenttransfer_cur) || inSet(p.currenttransfer_cur, catvalues)) {
+            catvalues = ["2"];
+            if (inSet(p.mobilityWC_cur, catvalues)) {
+              nodeid = 28;
+              predclass = "1";
+              posterior = [0.80898e+00, 0.16348e+00, 0.26017e-01, 0.15248e-02];
+            } else {
+              catvalues = ["3"];
+              if (inSet(p.currentlesion_cur, catvalues)) {
+                catvalues = ["NA","RGO - Reciprocating Gait Orthosis"];
+                if (isNA(p.currentbracetype_cur) || inSet(p.currentbracetype_cur, catvalues)) {
+                  catvalues = ["MENINGOCELE","MYELOMENINGOCELE"];
+                  if (inSet(p.PrimaryDiagnosis, catvalues)) {
+                    if (p.AgeAtVisit !== null && p.AgeAtVisit <= 21.2477879600) {
+                      if (p.AgeAtVisit !== null && p.AgeAtVisit <= 18.5812344100) {
+                        if (p.AgeAtVisit !== null && p.AgeAtVisit <= 11.8760897100) {
+                          catvalues = ["0","1","4","5","6","7"];
+                          if (inSet(p.currentsurgcount_cur, catvalues)) {
+                            catvalues = ["Hispanic or Latino"];
+                            if (inSet(p.Ethnicity, catvalues)) {
+                              nodeid = 7424;
+                              predclass = "2";
+                              posterior = [0.19225e+00, 0.56203e+00, 0.16564e+00, 0.80089e-01];
+                            } else {
+                              catvalues = ["5","7"];
+                              if (inSet(p.currentsurgcount_cur, catvalues)) {
+                                nodeid = 14850;
+                                predclass = "2";
+                                posterior = [0.92767e-01, 0.47118e+00, 0.31245e+00, 0.12360e+00];
+                              } else {
+                                if (p.AgeAtVisit !== null && p.AgeAtVisit <= 6.12671098950) {
+                                  nodeid = 29702;
+                                  predclass = "2";
+                                  posterior = [0.15520e+00, 0.46454e+00, 0.30804e+00, 0.72215e-01];
+                                } else {
+                                  nodeid = 29703;
+                                  predclass = "3";
+                                  posterior = [0.12951e+00, 0.25682e+00, 0.48869e+00, 0.12498e+00];
+                                }
+                              }
+                            }
+                          } else {
+                            catvalues = ["Hispanic or Latino"];
+                            if (inSet(p.Ethnicity, catvalues)) {
+                              nodeid = 7426;
+                              predclass = "3";
+                              posterior = [0.11372e+00, 0.15884e+00, 0.57930e+00, 0.14815e+00];
+                            } else {
+                              catvalues = ["3","8","12","13"];
+                              if (inSet(p.currentsurgcount_cur, catvalues)) {
+                                catvalues = ["1","3"];
+                                if (inSet(p.InsuranceID, catvalues)) {
+                                  nodeid = 29708;
+                                  predclass = "3";
+                                  posterior = [0.25411e+00, 0.16638e+00, 0.51485e+00, 0.64660e-01];
+                                } else {
+                                  nodeid = 29709;
+                                  predclass = "2";
+                                  posterior = [0.81414e-01, 0.62027e+00, 0.27421e+00, 0.24106e-01];
+                                }
+                              } else {
+                                nodeid = 14855;
+                                predclass = "3";
+                                posterior = [0.16680e+00, 0.26736e+00, 0.48122e+00, 0.84610e-01];
+                              }
+                            }
+                          }
+                        } else {
+                          catvalues = ["Not Hispanic or Latino"];
+                          if (inSet(p.Ethnicity, catvalues)) {
+                            catvalues = ["5","10","11","13","15","18","19"];
+                            if (inSet(p.currentsurgcount_cur, catvalues)) {
+                              nodeid = 7428;
+                              predclass = "2";
+                              posterior = [0.18749e+00, 0.62348e+00, 0.22058e-04, 0.18901e+00];
+                            } else {
+                              catvalues = ["2","3","8","9","12"];
+                              if (inSet(p.currentsurgcount_cur, catvalues)) {
+                                nodeid = 14858;
+                                predclass = "2";
+                                posterior = [0.11300e+00, 0.53066e+00, 0.27068e+00, 0.85665e-01];
+                              } else {
+                                nodeid = 14859;
+                                predclass = "3";
+                                posterior = [0.11231e+00, 0.27889e+00, 0.49702e+00, 0.11178e+00];
+                              }
+                            }
+                          } else {
+                            if (p.AgeAtVisit !== null && p.AgeAtVisit <= 16.1254138550) {
+                              catvalues = ["0","2","3"];
+                              if (inSet(p.currentsurgcount_cur, catvalues)) {
+                                nodeid = 14860;
+                                predclass = "2";
+                                posterior = [0.11135e+00, 0.51843e+00, 0.22918e+00, 0.14104e+00];
+                              } else {
+                                nodeid = 14861;
+                                predclass = "3";
+                                posterior = [0.72680e-01, 0.19035e+00, 0.58903e+00, 0.14795e+00];
+                              }
+                            } else {
+                              nodeid = 7431;
+                              predclass = "2";
+                              posterior = [0.23757e+00, 0.43661e+00, 0.22058e-04, 0.32580e+00];
+                            }
+                          }
+                        }
+                      } else {
+                        catvalues = ["2"];
+                        if (inSet(p.InsuranceID, catvalues)) {
+                          nodeid = 1858;
+                          predclass = "3";
+                          posterior = [0.97417e-01, 0.17009e+00, 0.56393e+00, 0.16856e+00];
+                        } else {
+                          catvalues = ["0","12","2","28","4","9"];
+                          if (inSet(p.currentsurgcount_cur, catvalues)) {
+                            nodeid = 3718;
+                            predclass = "3";
+                            posterior = [0.27067e+00, 0.22058e-04, 0.65970e+00, 0.69614e-01];
+                          } else {
+                            nodeid = 3719;
+                            predclass = "2";
+                            posterior = [0.10191e+00, 0.49275e+00, 0.29044e+00, 0.11490e+00];
+                          }
+                        }
+                      }
+                    } else {
+                      catvalues = ["1","8","9","18","21","22"];
+                      if (inSet(p.currentsurgcount_cur, catvalues)) {
+                        nodeid = 930;
+                        predclass = "3";
+                        posterior = [0.86896e-01, 0.17849e+00, 0.56813e+00, 0.16648e+00];
+                      } else {
+                        nodeid = 931;
+                        predclass = "2";
+                        posterior = [0.17291e+00, 0.56828e+00, 0.11305e+00, 0.14576e+00];
+                      }
+                    }
+                  } else {
+                    nodeid = 233;
+                    predclass = "1";
+                    posterior = [0.41897e+00, 0.37426e+00, 0.13537e+00, 0.71403e-01];
+                  }
+                } else {
+                  nodeid = 117;
+                  predclass = "2";
+                  posterior = [0.17801e+00, 0.64018e+00, 0.14782e+00, 0.33987e-01];
+                }
+              } else {
+                catvalues = ["NA","SMO -Supra-Malleolar Orthosis"];
+                if (isNA(p.currentbracetype_cur) || inSet(p.currentbracetype_cur, catvalues)) {
+                  catvalues = ["5","7","10","12","16"];
+                  if (inSet(p.currentsurgcount_cur, catvalues)) {
+                    if (p.AgeAtVisit !== null && p.AgeAtVisit <= 11.7484314150) {
+                      nodeid = 472;
+                      predclass = "3";
+                      posterior = [0.29673e+00, 0.22058e-04, 0.39261e+00, 0.31064e+00];
+                    } else {
+                      nodeid = 473;
+                      predclass = "1";
+                      posterior = [0.59182e+00, 0.12525e+00, 0.16611e+00, 0.11682e+00];
+                    }
+                  } else {
+                    catvalues = ["1"];
+                    if (inSet(p.mobilityWC_cur, catvalues)) {
+                      nodeid = 474;
+                      predclass = "2";
+                      posterior = [0.15277e+00, 0.49790e+00, 0.28299e+00, 0.66343e-01];
+                    } else {
+                      catvalues = ["4","8","11","15"];
+                      if (inSet(p.currentsurgcount_cur, catvalues)) {
+                        nodeid = 950;
+                        predclass = "2";
+                        posterior = [0.28178e+00, 0.53299e+00, 0.10875e+00, 0.76482e-01];
+                      } else {
+                        catvalues = ["2","3"];
+                        if (inSet(p.InsuranceID, catvalues)) {
+                          catvalues = ["1","2","6"];
+                          if (inSet(p.currentsurgcount_cur, catvalues)) {
+                            if (p.AgeAtVisit !== null && p.AgeAtVisit <= 17.7501630550) {
+                              catvalues = ["1"];
+                              if (inSet(p.currentsurgcount_cur, catvalues)) {
+                                if (p.AgeAtVisit !== null && p.AgeAtVisit <= 9.49967322700) {
+                                  nodeid = 30432;
+                                  predclass = "1";
+                                  posterior = [0.39741e+00, 0.39649e+00, 0.17528e+00, 0.30818e-01];
+                                } else {
+                                  nodeid = 30433;
+                                  predclass = "3";
+                                  posterior = [0.28566e+00, 0.22167e+00, 0.44098e+00, 0.51690e-01];
+                                }
+                              } else {
+                                if (p.AgeAtVisit !== null && p.AgeAtVisit <= 10.0417803350) {
+                                  nodeid = 30434;
+                                  predclass = "3";
+                                  posterior = [0.30134e+00, 0.16190e+00, 0.53673e+00, 0.22058e-04];
+                                } else {
+                                  nodeid = 30435;
+                                  predclass = "2";
+                                  posterior = [0.24165e+00, 0.53699e+00, 0.20347e+00, 0.17888e-01];
+                                }
+                              }
+                            } else {
+                              nodeid = 7609;
+                              predclass = "1";
+                              posterior = [0.69171e+00, 0.27606e+00, 0.22058e-04, 0.32206e-01];
+                            }
+                          } else {
+                            catvalues = ["3"];
+                            if (inSet(p.currentsurgcount_cur, catvalues)) {
+                              if (p.AgeAtVisit !== null && p.AgeAtVisit <= 14.3320122350) {
+                                nodeid = 15220;
+                                predclass = "1";
+                                posterior = [0.63216e+00, 0.16982e+00, 0.22058e-04, 0.19799e+00];
+                              } else {
+                                nodeid = 15221;
+                                predclass = "2";
+                                posterior = [0.24590e+00, 0.53667e+00, 0.14235e+00, 0.75085e-01];
+                              }
+                            } else {
+                              nodeid = 7611;
+                              predclass = "1";
+                              posterior = [0.47521e+00, 0.42010e+00, 0.55715e-01, 0.48980e-01];
+                            }
+                          }
+                        } else {
+                          if (p.AgeAtVisit !== null && p.AgeAtVisit <= 8.83371382600) {
+                            if (p.AgeAtVisit !== null && p.AgeAtVisit <= 6.62833675550) {
+                              nodeid = 7612;
+                              predclass = "1";
+                              posterior = [0.49330e+00, 0.33340e+00, 0.14739e+00, 0.25914e-01];
+                            } else {
+                              nodeid = 7613;
+                              predclass = "2";
+                              posterior = [0.31795e+00, 0.45549e+00, 0.22654e+00, 0.22058e-04];
+                            }
+                          } else {
+                            nodeid = 3807;
+                            predclass = "1";
+                            posterior = [0.65364e+00, 0.20844e+00, 0.55289e-01, 0.82629e-01];
+                          }
+                        }
+                      }
+                    }
+                  }
+                } else {
+                  nodeid = 119;
+                  predclass = "2";
+                  posterior = [0.31165e+00, 0.53246e+00, 0.13628e+00, 0.19604e-01];
+                }
+              }
+            }
+          } else {
+            catvalues = ["NA"];
+            if (isNA(p.currentbraceused_cur) || inSet(p.currentbraceused_cur, catvalues)) {
+              nodeid = 30;
+              predclass = "4";
+              posterior = [0.13907e-01, 0.14942e+00, 0.27744e+00, 0.55923e+00];
+            } else {
+              nodeid = 31;
+              predclass = "3";
+              posterior = [0.11193e-01, 0.16193e+00, 0.73313e+00, 0.93747e-01];
+            }
+          }
+        }
+      }
+
+      return { nodeid: nodeid, predclass: predclass, posterior: posterior };
+    }
+
+    function onPredict() {
+      var p = mapInputs();
+
+      var ambRes = predictedAmb(p);
+
+      var ambLabels = ["Community", "Household", "Therapeutic", "Non-ambulator"];
+      var dfAmb = [];
+      for (var i = 0; i < 4; i++) {
+        dfAmb.push([ambLabels[i], ambRes.posterior[i]]);
+      }
+
+      var ambMap = { "1": "Community", "2": "Household", "3": "Therapeutic", "4": "Non-ambulator" };
+      var ambLabel = ambMap[ambRes.predclass] ? ambMap[ambRes.predclass] : ambRes.predclass;
+
+      var predictionText = "";
+
+      if (p.transfer_applicable) {
+        var transRes = predictedTransfer(p.currenttransfer_cur, p.amb_cur);
+
+        var transMap = { "1": "Yes", "2": "No" };
+        var transLabel = transMap[transRes.predclass] ? transMap[transRes.predclass] : transRes.predclass;
+
+        predictionText = "Most likely future ambulation: " + ambLabel +
+          ". Most likely future transfer ability: " + transLabel + ".";
+
+        var dfTransfer = [
+          ["Yes", transRes.posterior[0]],
+          ["No",  transRes.posterior[1]]
+        ];
+
+        renderTable("amb_table", ["Ambulation Level", "Probability"], dfAmb, 1);
+        renderTable("transfer_table", ["Transfer Ability", "Probability"], dfTransfer, 1);
+      } else {
+        predictionText = "Most likely future ambulation: " + ambLabel + ". Transfer prediction: N/A.";
+        renderTable("amb_table", ["Ambulation Level", "Probability"], dfAmb, 1);
+        renderTable("transfer_table", ["Transfer Ability"], [["N/A (patient does not use a wheelchair)"]], null);
+      }
+
+      document.getElementById("prediction").textContent = predictionText;
+      window.scrollTo(0, 0);
+    }
+
+    var btn = document.getElementById("predict_button");
+    if (btn) btn.addEventListener("click", onPredict);
+  })();
+  </script>
+</body>
+</html>
